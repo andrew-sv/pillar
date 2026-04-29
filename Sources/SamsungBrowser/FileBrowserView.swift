@@ -198,14 +198,18 @@ struct FileBrowserView: View {
     }
 
     private func pushURLs(_ urls: [URL]) async {
+        var failures: [String] = []
         for url in urls {
             do {
                 try await adb.push(url, toRemoteDir: path)
             } catch {
-                await MainActor.run { errorMessage = error.localizedDescription }
+                failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
             }
         }
         await refresh()
+        if !failures.isEmpty {
+            errorMessage = failures.joined(separator: "\n")
+        }
     }
 
     private func commitRename() async {
